@@ -28,7 +28,7 @@ public class MyOdometryOpmode extends LinearOpMode {
         waitForStart();
 
         //Create and start GlobalCoordinatePosition thread to constantly update the global coordinate positions
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(SKY.verticalEncoderLeft, SKY.verticalRight, horizontal, COUNTS_PER_INCH, 75);
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(SKY.verticalEncoderLeft, SKY.verticalEncoderRight, SKY.horizontalEncoder, SKY.COUNTS_PER_INCH, 75);
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
 
@@ -37,13 +37,13 @@ public class MyOdometryOpmode extends LinearOpMode {
 
         while(opModeIsActive()){
             //Display Global (x, y, theta) coordinates
-            telemetry.addData("X Position", globalPositionUpdate.returnXCoordinate() / COUNTS_PER_INCH);
-            telemetry.addData("Y Position", globalPositionUpdate.returnYCoordinate() / COUNTS_PER_INCH);
+            telemetry.addData("X Position", globalPositionUpdate.returnXCoordinate() / SKY.COUNTS_PER_INCH);
+            telemetry.addData("Y Position", globalPositionUpdate.returnYCoordinate() / SKY.COUNTS_PER_INCH);
             telemetry.addData("Orientation (Degrees)", globalPositionUpdate.returnOrientation());
 
-            telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
-            telemetry.addData("Vertical right encoder position", verticalRight.getCurrentPosition());
-            telemetry.addData("horizontal encoder position", horizontal.getCurrentPosition());
+            telemetry.addData("Vertical left encoder position", SKY.verticalEncoderLeft.getCurrentPosition());
+            telemetry.addData("Vertical right encoder position", SKY.verticalEncoderRight.getCurrentPosition());
+            telemetry.addData("horizontal encoder position", SKY.horizontalEncoder.getCurrentPosition());
 
             telemetry.addData("Thread Active", positionThread.isAlive());
             telemetry.update();
@@ -53,44 +53,61 @@ public class MyOdometryOpmode extends LinearOpMode {
         globalPositionUpdate.stop();
 
     }
+    public void goToPosition(double targetXPosition, double targetYPosition, double robotPower, double desiredRobotOrientation, double allowableDistanceError){
+        double distanceToXTarget = targetXPosition - globalPositionUpdate.returnXCoordinate();
+        double distanceToYTarget = targetYPosition - globalPositionUpdate.returnYCoordinate();
+        double distance = Math.hypot(distanceToXTarget, distanceToYTarget);
+
+        while(opModeIsActive() && distance > allowableDistanceError){
+            distance = Math.hypot(distanceToXTarget, distanceToYTarget);
+            distanceToXTarget = targetXPosition - globalPositionUpdate.returnXCoordinate();
+            distanceToYTarget = targetYPosition - globalPositionUpdate.returnYCoordinate();
+
+            double robotMovementAngle = Math.toDegrees(Math.atan2(distanceToXTarget, distanceToYTarget));
+
+            double robot_movement_x_component = calculateX(robotMovementAngle, robotPower);
+            double robot_movement_y_component = calculateY(robotMovementAngle, robotPower);
+            double pivotCorrection = desiredRobotOrientation - globalPositionUpdate.returnOrientation();
+        }
+    }
 
     private void initDriveHardwareMap(String rfName, String rbName, String lfName, String lbName, String vlEncoderName, String vrEncoderName, String hEncoderName){
-        right_front = hardwareMap.dcMotor.get(rfName);
-        right_back = hardwareMap.dcMotor.get(rbName);
-        left_front = hardwareMap.dcMotor.get(lfName);
-        left_back = hardwareMap.dcMotor.get(lbName);
+        SKY.rightF = hardwareMap.dcMotor.get(rfName);
+        SKY.rightB = hardwareMap.dcMotor.get(rbName);
+        SKY.leftF = hardwareMap.dcMotor.get(lfName);
+        SKY.leftF = hardwareMap.dcMotor.get(lbName);
 
-        verticalLeft = hardwareMap.dcMotor.get(vlEncoderName);
-        verticalRight = hardwareMap.dcMotor.get(vrEncoderName);
-        horizontal = hardwareMap.dcMotor.get(hEncoderName);
+        SKY.verticalEncoderLeft = hardwareMap.dcMotor.get(vlEncoderName);
+        SKY.verticalEncoderRight = hardwareMap.dcMotor.get(vrEncoderName);
+        SKY.horizontalEncoder = hardwareMap.dcMotor.get(hEncoderName);
 
-        right_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        right_back.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left_back.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.rightF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.rightB.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.leftF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.leftF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        right_front.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        right_back.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        left_front.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        left_back.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.rightF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.rightB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.leftF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.leftF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        verticalLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        verticalRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        horizontal.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.verticalEncoderLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.verticalEncoderRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        SKY.horizontalEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        verticalLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        verticalRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        horizontal.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.verticalEncoderLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.verticalEncoderRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SKY.horizontalEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        right_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        right_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        left_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        left_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        SKY.rightF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        SKY.rightB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        SKY.leftF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        SKY.leftF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_back.setDirection(DcMotorSimple.Direction.REVERSE);
+        //left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        //right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        //right_back.setDirection(DcMotorSimple.Direction.REVERSE);
 
         telemetry.addData("Status", "Hardware Map Init Complete");
         telemetry.update();

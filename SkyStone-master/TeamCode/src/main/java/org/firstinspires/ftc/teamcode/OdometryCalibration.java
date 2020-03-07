@@ -9,6 +9,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import java.io.File;
@@ -48,6 +51,7 @@ public class OdometryCalibration extends LinearOpMode {
         parameters.loggingTag          = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
+        imu.getAngularOrientation(AxesReference.EXTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
         telemetry.clear();
 
@@ -153,9 +157,9 @@ public class OdometryCalibration extends LinearOpMode {
         SKY.leftF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         SKY.leftB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        SKY.leftF.setDirection(DcMotorSimple.Direction.REVERSE);
-        SKY.rightF.setDirection(DcMotorSimple.Direction.REVERSE);
-        SKY.rightB.setDirection(DcMotorSimple.Direction.REVERSE);
+        //SKY.leftF.setDirection(DcMotorSimple.Direction.REVERSE);
+        //SKY.rightF.setDirection(DcMotorSimple.Direction.REVERSE);
+        //SKY.rightB.setDirection(DcMotorSimple.Direction.REVERSE);
 
         telemetry.addData("Status", "Hardware Map Init Complete");
         telemetry.update();
