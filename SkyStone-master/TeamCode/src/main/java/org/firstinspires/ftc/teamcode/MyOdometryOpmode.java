@@ -68,6 +68,7 @@ public class MyOdometryOpmode extends LinearOpMode {
             double robot_movement_x_component = calculateX(robotMovementAngle, robotPower);
             double robot_movement_y_component = calculateY(robotMovementAngle, robotPower);
             double pivotCorrection = desiredRobotOrientation - globalPositionUpdate.returnOrientation();
+            moveToPosition(robot_movement_x_component, robot_movement_y_component, pivotCorrection);
         }
     }
 
@@ -98,7 +99,6 @@ public class MyOdometryOpmode extends LinearOpMode {
         SKY.verticalEncoderLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         SKY.verticalEncoderRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         SKY.horizontalEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
 
         SKY.rightF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         SKY.rightB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -131,5 +131,20 @@ public class MyOdometryOpmode extends LinearOpMode {
      */
     private double calculateY(double desiredAngle, double speed) {
         return Math.cos(Math.toRadians(desiredAngle)) * speed;
+    }
+
+    private void moveToPosition(double robot_move_x, double robot_move_y, double robot_pivot){
+        double frontLeftPower = (robot_move_y) + robot_move_x + (robot_pivot);
+        double backLeftPower = (robot_move_y) - robot_move_x - (robot_pivot);
+        double frontRightPower = (robot_move_y) - robot_move_x + (robot_pivot);
+        double backRightPower = (robot_move_y) + robot_move_x - (robot_pivot);
+        SKY.leftF.setPower(frontLeftPower);
+        SKY.leftB.setPower(backLeftPower);
+        SKY.rightF.setPower(frontRightPower);
+        SKY.rightB.setPower(backRightPower);
+        telemetry.addData("Left Front Power", frontLeftPower);
+        telemetry.addData("Left Rear Power", backLeftPower);
+        telemetry.addData("Right Front Power", frontRightPower);
+        telemetry.addData("Right Rear Power", backRightPower);
     }
 }
